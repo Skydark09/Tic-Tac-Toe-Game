@@ -8,6 +8,7 @@ let container = document.querySelector(".container");
 
 let turnO = true; // Player O starts
 let gameActive = false;
+let vsComputer = false;
 
 const winPatterns = [
   [0, 1, 2],
@@ -22,6 +23,7 @@ const winPatterns = [
 
 // ===== START 2 PLAYER MODE =====
 document.querySelector("#twoPlayer").addEventListener("click", () => {
+  vsComputer = false;
   optionContainer.classList.add("hide");
   container.classList.remove("hide");
   resetBtn.classList.remove("hide");
@@ -56,8 +58,72 @@ boxes.forEach((box) => {
 
     box.disabled = true;
     checkWinner();
+    // computrt move
+    if (vsComputer && gameActive && !turnO) {
+      setTimeout(computerMove, 400);
+    }
   });
 });
+
+// ===== START VS COMPUTER MODE =====
+document.querySelector("#playerComputer").addEventListener("click", () => {
+  optionContainer.classList.add("hide");
+  container.classList.remove("hide");
+  resetBtn.classList.remove("hide");
+  vsComputer = true;
+  startGame();
+});
+// ===== FIND WINNING MOVE =====
+function findWinningMove(player) {
+  for (let pattern of winPatterns) {
+    let [pos1, pos2, pos3] = pattern;
+    let values = [
+      boxes[pos1].innerText,
+      boxes[pos2].innerText,
+      boxes[pos3].innerText,
+    ];
+    // Check if two positions are player's and one is empty
+    if (
+      values.filter((val) => val === player).length === 2 &&
+      values.includes("")
+    ) {
+      let emptyIndex = pattern[values.indexOf("")];
+      return boxes[emptyIndex];
+    }
+  }
+  return null;
+}
+
+// ===== COMPUTER MOVE =====
+function computerMove() {
+  // computer tries to win
+  let move = findWinningMove("X");
+  if (move !== null) {
+    placeComputerMove(move);
+    return;
+  }
+  // computer tries to block O
+  move = findWinningMove("O");
+  if (move !== null) {
+    placeComputerMove(move);
+    return;
+  }
+  // random move
+  let availableMoves = [...boxes].filter((box) => box.innerText === "");
+  if (availableMoves.length === 0) return;
+  let randomBox =
+    availableMoves[Math.floor(Math.random() * availableMoves.length)];
+  placeComputerMove(randomBox);
+}
+// ===== PLACE COMPUTER MOVE =====
+function placeComputerMove(box) {
+  box.innerText = "X";
+  box.style.color = "blue";
+  box.disabled = true;
+  turnO = true;
+
+  checkWinner();
+}
 
 // ===== CHECK WINNER =====
 function checkWinner() {
@@ -87,6 +153,7 @@ function showWinner(winner) {
 
   if (winner === "Draw") {
     msg.innerText = "It's a Draw!";
+    msg.style.color = "#ff9f1c";
   } else {
     msg.innerText = `Congratulations, Winner is ${winner}`;
     msg.style.color = winner === "O" ? "orange" : "blue";
@@ -104,7 +171,7 @@ resetBtn.addEventListener("click", startGame);
 // ===== DARK MODE TOGGLE =====
 const toggleBtn = document.getElementById("theme-toggle");
 
-// Load saved theme
+//====== Load saved theme ======
 if (localStorage.getItem("theme") === "dark") {
   document.body.classList.add("dark");
   toggleBtn.textContent = "☀️";
